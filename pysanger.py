@@ -1,7 +1,7 @@
 import os 
 import sys 
 from Bio import SeqIO
-# from Bio import pairwise2
+from Bio import pairwise2
 from Bio.Align import PairwiseAligner
 import matplotlib
 import matplotlib.pyplot as plt
@@ -67,6 +67,12 @@ def abi_to_dict(filename):
     return abi_data 
 
 def generate_consensusseq(abidata):
+    '''
+    _atgc_dict = {0:"A", 1:"T", 2:"G", 3:"C"}
+    index   0   1   2   3
+    signal  A   T   G   C
+
+    '''
     consensus_seq = "" 
     
     for values in zip(abidata["channel"]["A"], abidata["channel"]["T"], abidata["channel"]["G"], abidata["channel"]["C"]):
@@ -147,25 +153,109 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
         avalues, tvalues, gvalues, cvalues = tuple(map(lambda x:list(reversed(x)), tvalues, avalues, cvalues, gvalues)) 
    
     if template is not None:
-        # alignments  = pairwise2.align.globalms(template, subject, 2, 0, -10, -1, penalize_end_gaps=False)
+
+        '''
+        >>> from Bio.Align import PairwiseAligner
+        >>> aligner = PairwiseAligner()
+        >>> aligner.algorithm
+        'Needleman-Wunsch'
+        >>> aligner.query_extend_gap_score = -3
+        >>> aligner.query_open_gap_score = -4
+        >>> aligner.algorithm
+        'Gotoh global alignment algorithm'
+        >>> aligner.query_open_gap_score = -3
+        >>> aligner.algorithm
+        'Needleman-Wunsch'
+        >>> aligner.mode = 'local'
+        >>> aligner.algorithm
+        'Smith-Waterman'
+        >>> aligner.query_open_gap_score = -7
+        >>> aligner.algorithm
+        'Gotoh local alignment algorithm'
+        '''
+        '''
+        score,
+        substitution_matrix,
+
+        # gap
+        query_gap_score,
+        query_open_gap_score,
+        query_extend_gap_score,
+
+        target_gap_score,
+        target_open_gap_score,
+        target_extend_gap_score,
+
+        # right
+        right_extend_gap_score,
+        right_gap_score,
+        right_open_gap_score,
+
+        # end
+        query_end_gap_score,
+        query_end_open_gap_score,
+        query_end_extend_gap_score, 
+
+        target_end_gap_score,
+        target_end_extend_gap_score,
+        target_end_open_gap_score,
+
+        # internal
+        query_internal_gap_score,
+        query_internal_open_gap_score,
+        query_internal_extend_gap_score,
+
+        target_internal_gap_score,
+        target_internal_open_gap_score,
+        target_internal_extend_gap_score,
+
+
+        #left
+        query_left_gap_score,
+        query_left_open_gap_score,
+        query_left_extend_gap_score,
+
+        target_left_gap_score,
+        target_left_open_gap_score,
+        target_left_extend_gap_score,
+
+
+        # rigth 
+        query_right_gap_score,
+        query_right_open_gap_score,
+        query_right_extend_gap_score,
+
+        target_right_gap_score,
+        target_right_open_gap_score
+        target_right_extend_gap_score,
+
+        '''
         aligner = PairwiseAligner()
+        print(dir(aligner))
+        aligner.mode = 'global'
+
         aligner.match = 2
         aligner.mismatch = 0
         aligner.open_gap_score = -10
         aligner.extend_gap_score = -1
-        
-        # penalize_end_gaps
+        # end gap # penalize_end_gaps
         aligner.query_end_gap_score = 0
         aligner.query_end_open_gap_score = 0
         aligner.query_end_extend_gap_score = 0
+
         aligner.target_end_gap_score = 0
         aligner.target_end_extend_gap_score = 0
         aligner.target_end_open_gap_score = 0
-        
-        alignments  = aligner.align(template, subject)
+        alignments  = aligner.align(template, subject) #,query
+
+        #pairwise2.align.globalms(template, subject, match,mismatch,open_gap_score,extend_gap_score)
+        #alignments  = pairwise2.align.globalms(template, subject, 2, 0, -10, -1, penalize_end_gaps=False)
+
+        print(alignments[0][0])
+        print(alignments[0][1])
         atemplate   = alignments[0][0]
         asubject    = alignments[0][1]
-        
+
         new_avalues = []
         new_tvalues = [] 
         new_gvalues = []
@@ -368,10 +458,22 @@ if __name__ == "__main__":
     import regex as re
     
     abidata = abi_to_dict(sys.argv[1])  
+    # 
+    print(abidata['channel']['A'][18])
+    print(abidata['channel']['T'][18])
+    print(abidata['channel']['G'][18])
+    print(abidata['channel']['C'][18])
+    print(len(abidata['channel']['A']))
+    print(len(abidata['channel']['T']))
+    print(len(abidata['channel']['G']))
+    print(len(abidata['channel']['C']))
+    print(len(abidata['conf']))
+    
+    #exit()
     fseq, rseq = generate_consensusseq(abidata)  
     fig = visualize(abidata, template="AGCCGGCTGGCTGCAGGCGT", region="aligned") 
     fig.savefig("test.pdf", bbox_inches="tight") 
-    
+    #exit()
     abidata = abi_to_dict(sys.argv[1])  
     fseq, rseq = generate_consensusseq(abidata)  
     fig = visualize(abidata, template="AGCCGGCTGGCTGCAGGCGT", region="all") 
@@ -386,7 +488,7 @@ if __name__ == "__main__":
     pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="probability")
     #pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="information")
     logo = logomaker.Logo(pwm,
-        font_name='Arial', # 'Helvetica',
+        font_name='Arial',# #Helvetica
         color_scheme='classic',
         vpad=.0,
         width=.8,
