@@ -153,6 +153,15 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
         aligner.mismatch = 0
         aligner.open_gap_score = -10
         aligner.extend_gap_score = -1
+        
+        # penalize_end_gaps
+        aligner.query_end_gap_score = 0
+        aligner.query_end_open_gap_score = 0
+        aligner.query_end_extend_gap_score = 0
+        aligner.target_end_gap_score = 0
+        aligner.target_end_extend_gap_score = 0
+        aligner.target_end_open_gap_score = 0
+        
         alignments  = aligner.align(template, subject)
         atemplate   = alignments[0][0]
         asubject    = alignments[0][1]
