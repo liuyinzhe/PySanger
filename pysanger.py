@@ -1,7 +1,8 @@
 import os 
 import sys 
 from Bio import SeqIO
-from Bio import pairwise2
+# from Bio import pairwise2
+from Bio.Align import PairwiseAligner
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd 
@@ -146,10 +147,16 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
         avalues, tvalues, gvalues, cvalues = tuple(map(lambda x:list(reversed(x)), tvalues, avalues, cvalues, gvalues)) 
    
     if template is not None:
-        alignments  = pairwise2.align.globalms(template, subject, 2, 0, -10, -1, penalize_end_gaps=False)
+        # alignments  = pairwise2.align.globalms(template, subject, 2, 0, -10, -1, penalize_end_gaps=False)
+        aligner = PairwiseAligner()
+        aligner.match = 2
+        aligner.mismatch = 0
+        aligner.open_gap_score = -10
+        aligner.extend_gap_score = -1
+        alignments  = aligner.align(template, subject)
         atemplate   = alignments[0][0]
         asubject    = alignments[0][1]
-
+        
         new_avalues = []
         new_tvalues = [] 
         new_gvalues = []
@@ -370,7 +377,7 @@ if __name__ == "__main__":
     pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="probability")
     #pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="information")
     logo = logomaker.Logo(pwm,
-        font_name='Helvetica',
+        font_name='Arial', # 'Helvetica',
         color_scheme='classic',
         vpad=.0,
         width=.8,
