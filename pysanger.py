@@ -1,12 +1,13 @@
 import os 
 import sys 
 from Bio import SeqIO
-from Bio import pairwise2
+#from Bio import pairwise2
 from Bio.Align import PairwiseAligner
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd 
 import logomaker
+import regex as re
 matplotlib.rcParams['font.family']       = 'sans-serif'
 matplotlib.rcParams['font.sans-serif']   = ["Arial","DejaVu Sans","Lucida Grande","Verdana"]
 matplotlib.rcParams['figure.figsize']    = [3,3]
@@ -80,17 +81,25 @@ def generate_consensusseq(abidata):
      
     return (consensus_seq, consensus_seq.translate(str.maketrans("ATGC","TACG"))[::-1]) 
 
-def generate_pwm(abidata):
+def generate_pwm(abidata,sum_target=100000):#100000
+    '''
+    PWM（Pulse Width Modulation）简称脉宽调制，是利用微处理器的数字输出来对模拟电路进行控制的一种非常有效的技术，广泛应用在测量、通信、工控等方面。
+
+    PWM频率的计算公式为: f = 1 / (T × N)
+    其中,f表示PWM的频率,T表示PWM的周期,N表示PWM的分辨率。
+
+    全部转为 总和为10W 的数值
+    '''
     pwm = {"A":[], "T":[], "G":[], "C":[]} 
     for values in zip(abidata["channel"]["A"], abidata["channel"]["T"], abidata["channel"]["G"], abidata["channel"]["C"]):
-        v = 100000 / (sum(values)+1) 
+        v = sum_target / (sum(values)+1) 
         new_values = (v*values[0], v*values[1], v*values[2], v*values[3])
         new_values = list(map(int, new_values))
-        
-        while sum(new_values) < 100000:
+        #
+        while sum(new_values) < sum_target:
             for i in range(len(new_values)):
                 new_values[i] += 1
-                if sum(new_values) == 100000:
+                if sum(new_values) == sum_target:
                     break 
         
         pwm["A"].append(new_values[0])
@@ -99,7 +108,7 @@ def generate_pwm(abidata):
         pwm["C"].append(new_values[3])
     
     pwm=pd.DataFrame(pwm)
-    return pwm 
+    return pwm
 
 def _colorbar(ax, ref, matches=None, char=True, fontsize=10):
     bars = ax.bar(list(range(len(ref))), [0.9] * (len(ref)), width=1.0, edgecolor="#BBBBBB", linewidth=0.5, align="edge",bottom=0.05)
@@ -231,11 +240,11 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
 
         '''
         aligner = PairwiseAligner()
-        print(dir(aligner))
+        #print(dir(aligner))
         aligner.mode = 'global'
 
         aligner.match = 2
-        aligner.mismatch = 0
+        aligner.mismatch = 0 # -1
         aligner.open_gap_score = -10
         aligner.extend_gap_score = -1
         # end gap # penalize_end_gaps
@@ -252,7 +261,7 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
         #alignments  = pairwise2.align.globalms(template, subject, 2, 0, -10, -1, penalize_end_gaps=False)
 
         print(alignments[0][0])
-        print(alignments[0][1])
+        #print(alignments[0][1])
         atemplate   = alignments[0][0]
         asubject    = alignments[0][1]
 
@@ -455,14 +464,14 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
     return fig 
 
 if __name__ == "__main__":
-    import regex as re
+
     
     abidata = abi_to_dict(sys.argv[1])  
     # 
-    print(abidata['channel']['A'][18])
-    print(abidata['channel']['T'][18])
-    print(abidata['channel']['G'][18])
-    print(abidata['channel']['C'][18])
+    print(abidata['channel']['A'][236])
+    print(abidata['channel']['T'][236])
+    print(abidata['channel']['G'][236])
+    print(abidata['channel']['C'][236])
     print(len(abidata['channel']['A']))
     print(len(abidata['channel']['T']))
     print(len(abidata['channel']['G']))
@@ -485,6 +494,7 @@ if __name__ == "__main__":
     s,e   = match.span()
     fig = plt.figure(figsize=(0.25,1))
     ax  = fig.add_axes([0.1, 0.1, e-s, 0.75])
+    print(pwm.iloc[s:e, :])
     pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="probability")
     #pwm = logomaker.transform_matrix(pwm.iloc[s:e, :], from_type="counts", to_type="information")
     logo = logomaker.Logo(pwm,
