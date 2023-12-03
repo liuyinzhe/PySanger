@@ -109,7 +109,7 @@ def generate_pwm(abidata,sum_target=100000):#100000
     
     pwm=pd.DataFrame(pwm)
     return pwm
-
+# 碱基行
 def _colorbar(ax, ref, matches=None, char=True, fontsize=10):
     bars = ax.bar(list(range(len(ref))), [0.9] * (len(ref)), width=1.0, edgecolor="#BBBBBB", linewidth=0.5, align="edge",bottom=0.05)
     ax.set_xlim(0,len(ref))
@@ -399,7 +399,7 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
     ax2.spines["top"].set_visible(False) 
     ax2.spines["bottom"].set_visible(False)
     ax2.spines["left"].set_visible(False) 
-
+    # 碱基行
     axs = _colorbar(axs, asubject, matches=matches, char=True, fontsize=10)
     length = max([len(asubject), len(atemplate)]) 
     if length < 100:
@@ -436,9 +436,10 @@ def visualize(abidata, template=None, strand=1, fig=None, region="all"):
     ax.set_xticks([]) 
     ax.set_xticklabels([]) 
     axs.set_ylabel("Consensus", rotation=0, va="top", ha="right") 
-
+    
     if atemplate is not None:
         axt = fig.add_axes([0, 0.8, 1.0 * len(atemplate)/20, 0.08])
+        # 模板碱基行
         axt = _colorbar(axt, atemplate, matches=matches, char=True, fontsize=10)
         num = 0 
         if ts == 0:
